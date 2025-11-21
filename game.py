@@ -12,8 +12,8 @@ pygame.init()
 ANCHO = 1125
 ALTO = 700
 
-#FONT_RETRO = pygame.font.Font(".\Fonts\Retro Gaming.ttf", 32)
-FONT_UPHEAT = pygame.font.Font(None, 40)
+FONT_RETRO = pygame.font.Font("Retro Gaming.ttf", 20)
+FONT_UPHEAT = pygame.font.Font("upheavtt.ttf", 32)
 
 CLOCK = pygame.time.Clock()
 MANAGER = pygame_gui.UIManager((ANCHO,ALTO))
@@ -44,7 +44,10 @@ rect_boton = boton_empezar_optimizado.get_rect()
 
 # -------- Elementos pantalla de nombre -------------------
 
-text_nombre_input = pygame_gui.elements.UITextEntryLine(relative_rect=pygame.Rect((ANCHO / 2, ALTO / 2), (300, 50)), manager=MANAGER, object_id="#texto_nombre")
+text_nombre_input = pygame_gui.elements.UITextEntryLine(relative_rect=pygame.Rect((ANCHO / 2 - 150, ALTO / 2 - 50), (300, 50)), manager=MANAGER, object_id="#texto_nombre")
+
+fondo_ingreso = pygame.image.load(".\SplahArts\kfondo_ingreso.png")
+fondo_ingreso_optimizado = fondo_ingreso.convert_alpha()
 
 #Funcion de la pantalla de inicio
 
@@ -60,18 +63,6 @@ def pantalla_de_inicio():
     screen.blit(boton_empezar_optimizado, (ANCHO / 2 - 120, ALTO / 2 + 100))
     rect_boton.left = ANCHO / 2 - 120
     rect_boton.top = ALTO / 2 + 100
-
-    pygame.display.update()
-
-#Funcion de la pantalla de ingresar usuario
-
-def pantalla_de_ingreso():
-
-    screen.fill((0,0,0))
-    screen.blit(background_optimizado,(0,0)) #Colocar el backgound de la pantalla
-
-    texto_ingreso = FONT_UPHEAT.render("INGRESE SU NOMBRE (MAX 10 CARAC)", True, (128, 81, 24))
-    screen.blit(texto_ingreso, (ANCHO / 2 - 220, ALTO / 2 - 200))
 
     pygame.display.update()
 
@@ -97,17 +88,39 @@ while running:
 
             UI_REFRESH_RATE = CLOCK.tick(60)/1000 #Tiempo de refresco de frames del UI
 
-            pantalla_de_ingreso()
+            screen.fill((0,0,0))
+            screen.blit(background_optimizado,(0,0)) #Colocar el backgound de la pantalla
+
+            screen.blit(fondo_ingreso_optimizado, (ANCHO / 2 - 390, ALTO / 2 - 300)) 
+
+            #Texto del para que ingrese el texto
+            texto_ingreso = FONT_UPHEAT.render("INGRESE SU NOMBRE:", True, (166, 144, 114))
+            screen.blit(texto_ingreso, (ANCHO / 2 - 160, ALTO / 2 - 125))
+
+            texto_press_enter = FONT_RETRO.render("Presionar ENTER para seguir", True, (166, 144, 114))
+            screen.blit(texto_press_enter, (ANCHO / 2 - 185, ALTO / 2 + 50))
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
+                # Este if evalua que el text box se complete y se aprete enter para seguir el codigo
+                if event.type == pygame_gui.UI_TEXT_ENTRY_FINISHED and event.ui_object_id == "#texto_nombre":
+                    if event.text:
+                        usuario = usuarios.Usuarios(event.text)
+                        mostrar_ingreso = False
+                        print(usuario.nombre_usuario, usuario.puntuacion)
+                    else:
+                        usuario = usuarios.Usuarios("JUGADOR")
+                        mostrar_ingreso = False
+                        print(usuario.nombre_usuario, usuario.puntuacion)
                 
                 MANAGER.process_events(event)
 
             MANAGER.update(UI_REFRESH_RATE)
 
             MANAGER.draw_ui(screen)
+
+            pygame.display.update()
 
         else: 
             screen.fill((0,0,0))
