@@ -9,6 +9,9 @@ import usuarios
 
 pygame.init()
 
+puntuacion_escapa = []
+puntuacion_caza = []
+
 ANCHO = 1125
 ALTO = 700
 
@@ -62,6 +65,19 @@ rect_boton_escapa = boton_escapa.get_rect()
 boton_caza = pygame.image.load(".\SplahArts\kboton_caza.png").convert_alpha()
 rect_boton_caza = boton_caza.get_rect()
 
+#Funcion ordenar lista
+
+def ordenar_puntuacion(lista):
+    if not lista: return lista
+    for i in range(len(lista)):
+        mayor = i
+        for j in range(i + 1, len(lista)):
+            if lista[j][1] > lista[mayor][1]: mayor = j
+        
+        lista[i], lista[mayor] = lista[mayor], lista[i]
+    
+    return lista
+
 #Funcion de la pantalla de inicio
 
 def pantalla_de_inicio():
@@ -92,12 +108,32 @@ def pantalla_de_podio():
     texto_modo_escapa = FONT_UPHEAT.render("MODO ESCAPA", True, (166, 144, 114))
     screen.blit(texto_modo_escapa, (175, 60))
 
+    if puntuacion_escapa:
+        y_inicial = 100
+        ord_punt_escapa = ordenar_puntuacion(puntuacion_escapa)
+        for usu in range(len(ord_punt_escapa)):
+            if usu < 5:
+                texto_podio = FONT_RETRO.render(f"{usu + 1} Lugar: {ord_punt_escapa[usu][0]} - {ord_punt_escapa[usu][1]}", True, (204, 186, 159))
+                screen.blit(texto_podio,(100, y_inicial))
+                y_inicial += 50
+
+
+
     texto_modo_cazador = FONT_UPHEAT.render("MODO CAZADOR", True, (166, 144, 114))
     screen.blit(texto_modo_cazador, (ANCHO / 2 + 175, 60))
 
+    if puntuacion_caza:
+        y_inicial = 100
+        ord_punt_caza = ordenar_puntuacion(puntuacion_caza)
+        for usu in range(len(ord_punt_caza)):
+            if usu < 5:
+                texto_podio = FONT_RETRO.render(f"{usu + 1} Lugar: {ord_punt_caza[usu][0]} - {ord_punt_caza[usu][1]}", True, (204, 186, 159))
+                screen.blit(texto_podio,(ANCHO / 2 + 100, y_inicial))
+                y_inicial += 50
+
     screen.blit(usuario_fondo, (ANCHO / 2 - 240, ALTO / 2 + 175))
 
-    texto_usuario = FONT_UPHEAT_LITLE.render(f"{usuarioCaza.nombre_usuario} - Puntos: {usuarioCaza.puntuacion}", True, (166, 144, 114))
+    texto_usuario = FONT_UPHEAT_LITLE.render(f"{usuario.nombre_usuario} - Puntos: {usuario.puntuacion}", True, (204, 186, 159))
     screen.blit(texto_usuario, (ANCHO / 2 - 190, ALTO / 2 + 230))
 
     texto_elegir = FONT_UPHEAT.render("ESCOGE UN MODO DE JUEGO:", True, (255, 255, 255))
@@ -164,17 +200,10 @@ while running:
                 if event.type == pygame_gui.UI_TEXT_ENTRY_FINISHED and event.ui_object_id == "#texto_nombre":
                     #Se evalua si el espacio esta lleno o si es menor a 10 carac en caso de q no, se pone nombre default
                     if event.text and len(event.text) <= 10:
-                        '''
-                        Se hacen dos objetos porque como se ocupa ingresar el nombre de primero no se puede evaluar
-                        donde guardar el usuario.
-
-                        '''
-                        usuarioEscapa = usuarios.ModoEscapa(event.text) #Creacion del objeto usuario para modo escapa
-                        usuarioCaza = usuarios.ModoCazador(event.text) #Creacion del objeto usuario para modo Caza
+                        usuario = usuarios.Usuarios(event.text) #Creacion del objeto usuario 
                         mostrar_ingreso = False
                     else:
-                        usuarioEscapa = usuarios.ModoEscapa("JUGADOR")
-                        usuarioCaza = usuarios.ModoCazador("JUGADOR") #En caso de no ingresar nada se pone un nombre predeterminado
+                        usuario = usuarios.Usuarios("JUGADOR") #En caso de no ingresar nada se pone un nombre predeterminado
                         mostrar_ingreso = False
                 
                 MANAGER.process_events(event)
