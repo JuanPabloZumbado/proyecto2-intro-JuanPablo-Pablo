@@ -162,6 +162,7 @@ while running:
         pantalla_de_inicio() #Mostrar pantalla de inicio
 
         #Calcular eventos para ver si se apreta el boton
+        #EGGBGRTTTRHRYHTR
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
