@@ -2,8 +2,8 @@ class Casilla:
     def __init__(self, x, y):
         self.x = x
         self.y = y
-        self.ancho = 0
-        self.altura = 0
+        self.ancho = 75
+        self.altura = 75
 
 class Camino(Casilla):
     def __init__(self, x, y):
