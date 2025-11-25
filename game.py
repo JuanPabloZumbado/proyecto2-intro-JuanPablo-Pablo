@@ -9,6 +9,14 @@ import usuarios
 
 pygame.init()
 
+mapa = [[0,0,6,0,0,0,6,6,6,6,6,0,0,0],
+        [6,6,6,0,0,0,6,0,5,0,0,0,0,2],
+        [0,0,0,0,4,0,0,0,0,0,4,0,0,4],
+        [0,0,6,6,6,0,0,0,0,0,0,0,0,0],
+        [0,0,6,0,0,0,5,0,4,0,6,6,6,0],      #Este es un mapa de prueb apara seguir con el desarrollo
+        [1,0,6,0,0,0,0,0,0,0,5,0,6,0],
+        [0,0,6,0,0,0,0,0,0,0,0,0,5,0]]
+
 puntuacion_escapa = []
 puntuacion_caza = []
 
@@ -162,7 +170,6 @@ while running:
         pantalla_de_inicio() #Mostrar pantalla de inicio
 
         #Calcular eventos para ver si se apreta el boton
-        #EGGBGRTTTRHRYHTR
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
