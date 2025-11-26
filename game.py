@@ -5,6 +5,7 @@ import pygame_gui #Libreria pygame_gui
 #Import de los demas archivos
 
 import usuarios
+import casillas as c
 
 
 pygame.init()
@@ -12,10 +13,11 @@ pygame.init()
 mapa = [[0,0,6,0,0,0,6,6,6,6,6,0,0,0],
         [6,6,6,0,0,0,6,0,5,0,0,0,0,2],
         [0,0,0,0,4,0,0,0,0,0,4,0,0,4],
-        [0,0,6,6,6,0,0,0,0,0,0,0,0,0],
+        [0,0,6,6,6,0,0,3,0,0,0,0,0,0],
         [0,0,6,0,0,0,5,0,4,0,6,6,6,0],      #Este es un mapa de prueb apara seguir con el desarrollo
         [1,0,6,0,0,0,0,0,0,0,5,0,6,0],
         [0,0,6,0,0,0,0,0,0,0,0,0,5,0]]
+
 
 puntuacion_escapa = []
 puntuacion_caza = []
@@ -72,6 +74,49 @@ rect_boton_escapa = boton_escapa.get_rect()
 
 boton_caza = pygame.image.load(".\SplahArts\kboton_caza.png").convert_alpha()
 rect_boton_caza = boton_caza.get_rect()
+
+# -------- Elementos pantalla de juego -------------------
+
+game_bar = pygame.image.load(".\SplahArts\game_bar.png").convert_alpha()
+
+#Funcion crear mapa de objetos
+
+def generar_matriz_mapa(mapa):
+    initial_y = 20
+    mapa_obj = [[0 for _ in range(len(mapa[0]))] for _ in range(len(mapa))]
+    for fila in range(len(mapa)):
+        initial_x = 40
+        for col in range(len(mapa[0])):
+            if mapa[fila][col] == 0: casilla = c.Camino(initial_x, initial_y)
+            if mapa[fila][col] == 1: casilla = c.Entrada(initial_x, initial_y)
+            if mapa[fila][col] == 2: casilla = c.Salida(initial_x, initial_y)
+            if mapa[fila][col] == 3: casilla = c.Trampa(initial_x, initial_y)
+            if mapa[fila][col] == 4: casilla = c.Liana(initial_x, initial_y)
+            if mapa[fila][col] == 5: casilla = c.Tunel(initial_x, initial_y)
+            if mapa[fila][col] == 6: casilla = c.Muro(initial_x, initial_y)
+            mapa_obj[fila][col] = casilla
+            initial_x += 75
+        initial_y += 75
+
+    return mapa_obj
+
+#Funcion impirmir mapa
+
+def imprimir_mapa(mapa):
+    
+    screen.fill((0,0,0))
+
+    screen.blit(background_optimizado,(0,0))
+
+    for fila in range(len(mapa)):
+        for col in range(len(mapa[0])):
+            fondo_casilla = pygame.image.load((mapa[fila][col]).splash).convert_alpha()
+            screen.blit(fondo_casilla, ((mapa[fila][col]).x, (mapa[fila][col]).y))
+
+    screen.blit(game_bar, (50, ALTO - 150))
+
+    pygame.display.update()
+
 
 #Funcion ordenar lista
 
@@ -239,15 +284,15 @@ while running:
                             modo_caza = True
 
             else: 
-                screen.fill((0,0,0))
 
-                screen.blit(background_optimizado,(0,0))
+                mapa_obj = generar_matriz_mapa(mapa)
+
+                imprimir_mapa(mapa_obj)
 
                 for event in pygame.event.get():
                     if event.type == pygame.QUIT:
                         running = False
             
-                pygame.display.update()
 
 pygame.quit()
 
