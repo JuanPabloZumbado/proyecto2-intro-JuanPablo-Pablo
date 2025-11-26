@@ -6,6 +6,7 @@ import pygame_gui #Libreria pygame_gui
 
 import usuarios
 import casillas as c
+import personajes
 
 
 pygame.init()
@@ -99,6 +100,17 @@ def generar_matriz_mapa(mapa):
         initial_y += 75
 
     return mapa_obj
+
+#Funcion obtener cordenadas iniciales del mapa
+
+def initial_cords(mapa_obj):
+    initial_x = 0
+    initial_y = 0
+    for fila in range(len(mapa_obj)):
+        if (mapa_obj[fila][0]).type_id == 1:
+            initial_x = (mapa_obj[fila][0]).x + ((mapa_obj[fila][0]).ancho / 2)
+            initial_y = (mapa_obj[fila][0]).y + ((mapa_obj[fila][0]).altura / 2)
+    return initial_x, initial_y
 
 #Funcion impirmir mapa
 
@@ -284,14 +296,34 @@ while running:
                             modo_caza = True
 
             else: 
+                if modo_escapa:
 
-                mapa_obj = generar_matriz_mapa(mapa)
+                    mapa_obj = generar_matriz_mapa(mapa)
 
-                imprimir_mapa(mapa_obj)
+                    imprimir_mapa(mapa_obj)
 
-                for event in pygame.event.get():
-                    if event.type == pygame.QUIT:
-                        running = False
+                    initial_x_p, initial_y_p = initial_cords(mapa_obj)
+
+                    personaje = personajes.UExplorador(initial_x_p, initial_y_p)
+
+                    personaje.imprimir_personaje(screen)
+
+                    for event in pygame.event.get():
+                        if event.type == pygame.QUIT:
+                            running = False
+
+                    pygame.display.update()
+                else:
+
+                    screen.fill((0,0,0))
+                    screen.blit(background_optimizado,(0,0)) #Colocar el backgound de la pantalla
+
+                    for event in pygame.event.get():
+                        if event.type == pygame.QUIT:
+                            running = False
+
+                    pygame.display.update()
+
             
 
 pygame.quit()
