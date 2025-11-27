@@ -480,7 +480,7 @@ while running:
                         tiempo = (pygame.time.get_ticks() - start_time) / 1000
                         puntos = max(0, int(1000/tiempo * dificultad_mult))
                         usuario.puntuacion = puntos
-                        puntuacion_escapa.append((usuario.nombre_usuario, puntos))
+                        puntuacion_escapa.append((usuario.nombre_usuario, usuario.puntuacion))
 
                         modo_escapa = False
                         mostrar_podio = True
