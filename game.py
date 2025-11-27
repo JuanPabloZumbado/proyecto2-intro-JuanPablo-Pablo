@@ -31,6 +31,8 @@ FONT_UPHEAT = pygame.font.Font("upheavtt.ttf", 32)
 FONT_UPHEAT_LITLE = pygame.font.Font("upheavtt.ttf", 26)
 
 CLOCK = pygame.time.Clock()
+FPS = 60
+COLDOWN = 500
 MANAGER = pygame_gui.UIManager((ANCHO,ALTO))
 
 screen = pygame.display.set_mode((ANCHO, ALTO))
@@ -111,6 +113,16 @@ def initial_cords(mapa_obj):
             initial_x = (mapa_obj[fila][0]).x + ((mapa_obj[fila][0]).ancho / 2)
             initial_y = (mapa_obj[fila][0]).y + ((mapa_obj[fila][0]).altura / 2)
     return initial_x, initial_y
+
+#Funcion que optiene todos los obstaculos para el jugador que escapa
+
+def obst_escapa(mapa):
+    obstaculos = []
+    for fila in range(len(mapa)):
+        for col in range(len(mapa[0])):
+            if (mapa[fila][col]).type_id == 4 or (mapa[fila][col]).type_id == 6:
+                obstaculos.append((mapa[fila][col]).colision)
+    return obstaculos
 
 #Funcion impirmir mapa
 
@@ -215,6 +227,27 @@ def pantalla_de_podio():
     pygame.display.update()
 
 
+
+mapa_obj = generar_matriz_mapa(mapa)
+initial_x_p, initial_y_p = initial_cords(mapa_obj)
+obstaculos_escapa = obst_escapa(mapa_obj)
+
+obstaculos_escapa.append(pygame.Rect(35, 0, 5, ALTO))
+obstaculos_escapa.append(pygame.Rect(1090, 0, 5, ALTO))
+obstaculos_escapa.append(pygame.Rect(0, 15, ANCHO, 5))
+obstaculos_escapa.append(pygame.Rect(0, 545, ANCHO, 5))
+
+#Variables de movimiento del personaje
+
+mover_derecha = False
+mover_izquierda = False
+mover_arriba = False
+mover_abajo = False
+
+#Variables de apricion de pantallas
+
+victoria = False
+inicio_juego = True 
 mostrar_ingreso = True
 mostrar_inicio = True
 mostrar_podio = True
@@ -291,20 +324,34 @@ while running:
                         if rect_boton_escapa.collidepoint(event.pos):
                             mostrar_podio = False
                             modo_escapa = True
+                            personaje = personajes.UExplorador(initial_x_p, initial_y_p)
                         if rect_boton_caza.collidepoint(event.pos):
                             mostrar_podio = False
                             modo_caza = True
 
-            else: 
+            else:
                 if modo_escapa:
-
-                    mapa_obj = generar_matriz_mapa(mapa)
+                    CLOCK.tick(FPS)
 
                     imprimir_mapa(mapa_obj)
 
-                    initial_x_p, initial_y_p = initial_cords(mapa_obj)
+                    #Calcular movimiento del jugador
 
-                    personaje = personajes.UExplorador(initial_x_p, initial_y_p)
+                    delta_x = 0
+                    delta_y = 0
+
+                    if mover_derecha:
+                        delta_x = 5
+                    if mover_izquierda:
+                        delta_x = -5
+                    if mover_arriba:
+                        delta_y = -5
+                    if mover_abajo:
+                        delta_y = 5
+
+                    #Mover personaje
+
+                    personaje.mover_personaje(delta_x, delta_y, obstaculos_escapa)
 
                     personaje.imprimir_personaje(screen)
 
@@ -312,17 +359,43 @@ while running:
                         if event.type == pygame.QUIT:
                             running = False
 
+                        if
+                        
+
+                        if event.type == pygame.KEYDOWN:
+                        
+
+                            if event.key == pygame.K_a:
+                                mover_izquierda = True
+                            if event.key == pygame.K_d:
+                                mover_derecha = True
+                            if event.key == pygame.K_w:
+                                mover_arriba = True
+                            if event.key == pygame.K_s:
+                                mover_abajo = True
+
+                        if event.type == pygame.KEYUP:
+                            if event.key == pygame.K_a:
+                                mover_izquierda = False
+                            if event.key == pygame.K_d:
+                                mover_derecha = False
+                            if event.key == pygame.K_w:
+                                mover_arriba = False
+                            if event.key == pygame.K_s:
+                                mover_abajo = False
+
+
                     pygame.display.update()
                 else:
+                    if victoria:
+                        screen.fill((0,0,0))
+                        screen.blit(background_optimizado,(0,0)) #Colocar el backgound de la pantalla
 
-                    screen.fill((0,0,0))
-                    screen.blit(background_optimizado,(0,0)) #Colocar el backgound de la pantalla
+                        for event in pygame.event.get():
+                            if event.type == pygame.QUIT:
+                                running = False
 
-                    for event in pygame.event.get():
-                        if event.type == pygame.QUIT:
-                            running = False
-
-                    pygame.display.update()
+                        pygame.display.update()
 
             
 
