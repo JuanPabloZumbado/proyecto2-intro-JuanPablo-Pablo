@@ -22,6 +22,7 @@ ALTO = 700
 FONT_RETRO = pygame.font.Font("Retro Gaming.ttf", 20)
 FONT_UPHEAT = pygame.font.Font("upheavtt.ttf", 32)
 FONT_UPHEAT_LITLE = pygame.font.Font("upheavtt.ttf", 26)
+FONT_UPHEAT_BIG = pygame.font.Font("upheavtt.ttf", 45)
 
 CLOCK = pygame.time.Clock()
 FPS = 60
@@ -74,6 +75,17 @@ rect_boton_caza = boton_caza.get_rect()
 # -------- Elementos pantalla de juego -------------------
 
 game_bar = pygame.image.load(".\SplahArts\game_bar.png").convert_alpha()
+
+# -------- Elementos pantalla de Victoria -------------------
+
+btn_victoria = pygame.image.load(".\SplahArts\kvictoria_volver_btn.png").convert_alpha()
+btn_victoria_rect = btn_victoria.get_rect()
+
+# -------- Elementos pantalla de Perdio -------------------
+
+btn_rendirse = pygame.image.load(".\SplahArts\krendirse_btn.png").convert_alpha()
+btn_rendirse_rect = btn_rendirse.get_rect()
+
 
 # =========================================================
 # 2) MAPA ALEATORIO CON CAMINO GARANTIZADO
@@ -134,10 +146,6 @@ def generar_mapa_aleatorio(filas=7, cols=14, p_muro=0.35, p_liana=0.08, p_tunel=
                 mapa[i][j] = CAMINO
     return mapa
 
-# =========================================================
-# 3) FUNCIONES QUE YA ESTABAN ANTES
-# =========================================================
-
 def generar_matriz_mapa(mapa):
     initial_y = 20
     mapa_obj = [[0 for _ in range(len(mapa[0]))] for _ in range(len(mapa))]
@@ -163,9 +171,10 @@ def initial_cords(mapa_obj):
     initial_x = 0
     initial_y = 0
     for fila in range(len(mapa_obj)):
-        if (mapa_obj[fila][0]).type_id == 1:
-            initial_x = (mapa_obj[fila][0]).x + ((mapa_obj[fila][0]).ancho / 2)
-            initial_y = (mapa_obj[fila][0]).y + ((mapa_obj[fila][0]).altura / 2)
+        for col in range(len(mapa_obj[0])):
+            if (mapa_obj[fila][col]).type_id == 1:
+                initial_x = (mapa_obj[fila][col]).x + ((mapa_obj[fila][0]).ancho / 2)
+                initial_y = (mapa_obj[fila][col]).y + ((mapa_obj[fila][0]).altura / 2)
     return initial_x, initial_y
 
 #Funcion que optiene todos los obstaculos para el jugador que escapa
@@ -271,6 +280,28 @@ def pantalla_de_podio():
 
     pygame.display.update()
 
+#Funcion para obtener la casilla de Salida
+
+def initial_cords_enemy(mapa_obj):
+    initial_x = 0
+    initial_y = 0
+    for fila in range(len(mapa_obj)):
+        for col in range(len(mapa_obj[0])):
+            if (mapa_obj[fila][col]).type_id == 2:
+                initial_x = (mapa_obj[fila][col]).x + ((mapa_obj[fila][0]).ancho / 2)
+                initial_y = (mapa_obj[fila][col]).y + ((mapa_obj[fila][0]).altura / 2)
+    return initial_x, initial_y
+
+#Funcion para pbtener los obstaculos del enemigo
+
+def obst_cazador(mapa_obj):
+    obstaculos = []
+    for fila in range(len(mapa_obj)):
+        for col in range(len(mapa_obj[0])):
+            if (mapa_obj[fila][col]).type_id == 5 or (mapa_obj[fila][col]).type_id == 6:
+                obstaculos.append((mapa_obj[fila][col]).colision)
+    return obstaculos
+
 # ---------------------------------------------------------
 # Helpers mínimos para detectar salida
 # ---------------------------------------------------------
@@ -310,6 +341,7 @@ mover_arriba = False
 mover_abajo = False
 
 victoria = False
+perdio = False
 inicio_juego = True 
 mostrar_ingreso = True
 mostrar_inicio = True
@@ -392,7 +424,9 @@ while running:
                             mapa = generar_mapa_aleatorio()
                             mapa_obj = generar_matriz_mapa(mapa)
                             initial_x_p, initial_y_p = initial_cords(mapa_obj)
+                            initial_x_e, initial_y_e = initial_cords_enemy(mapa_obj)
                             obstaculos_escapa = obst_escapa(mapa_obj)
+                            obstaculos_cazador = obst_cazador(mapa_obj)
                             obstaculos_escapa += [
                                 pygame.Rect(35, 0, 5, ALTO),
                                 pygame.Rect(1090, 0, 5, ALTO),
@@ -400,7 +434,15 @@ while running:
                                 pygame.Rect(0, 545, ANCHO, 5),
                             ]
 
+                            obstaculos_cazador += [
+                                pygame.Rect(35, 0, 5, ALTO),
+                                pygame.Rect(1090, 0, 5, ALTO),
+                                pygame.Rect(0, 15, ANCHO, 5),
+                                pygame.Rect(0, 545, ANCHO, 5),
+                            ]
+
                             personaje = personajes.UExplorador(initial_x_p, initial_y_p)
+                            enemigo = personajes.EnemigoCazador(initial_x_e, initial_y_e)
                             start_time = pygame.time.get_ticks()
 
                         # ---------------- NUEVA PARTIDA CAZA ----------------
@@ -448,7 +490,9 @@ while running:
 
                     #Mover personaje
                     personaje.mover_personaje(delta_x, delta_y, obstaculos_escapa)
+                    enemigo.seguir_jugador(personaje, obstaculos_cazador)
                     personaje.imprimir_personaje(screen)
+                    enemigo.imprimir_personaje(screen)
 
                     for event in pygame.event.get():
                         if event.type == pygame.QUIT:
@@ -477,13 +521,12 @@ while running:
 
                     # ---- VICTORIA ESCAPA (llega a salida) ----
                     if llego_a_salida(personaje, mapa_obj):
-                        tiempo = (pygame.time.get_ticks() - start_time) / 1000
-                        puntos = max(0, int(1000/tiempo * dificultad_mult))
-                        usuario.puntuacion = puntos
-                        puntuacion_escapa.append((usuario.nombre_usuario, usuario.puntuacion))
-
+                        victoria = True
                         modo_escapa = False
-                        mostrar_podio = True
+
+                    if enemigo.tocar_personaje(personaje):
+                        perdio = True
+                        modo_escapa = False
 
                     pygame.display.update()
 
@@ -495,9 +538,58 @@ while running:
                         screen.fill((0,0,0))
                         screen.blit(background_optimizado,(0,0)) #Colocar el backgound de la pantalla
 
+                        screen.blit(podio_fondo, (ANCHO / 2 - 250, ALTO / 2 - 200))
+
+                        texto_victoria = FONT_UPHEAT_BIG.render("GANASTE!", True, (255, 255, 255))
+                        screen.blit(texto_victoria, (ANCHO / 2 - 90, ALTO / 2 - 100))
+
+                        screen.blit(btn_victoria, (ANCHO / 2 - 70, ALTO / 2))
+                        btn_victoria_rect.left = ANCHO / 2 - 70
+                        btn_victoria_rect.top = ALTO / 2
+
                         for event in pygame.event.get():
                             if event.type == pygame.QUIT:
                                 running = False
+                            if event.type == pygame.MOUSEBUTTONDOWN:
+                                if btn_victoria_rect.collidepoint(event.pos):
+                                    tiempo = (pygame.time.get_ticks() - start_time) / 1000
+                                    puntos = max(0, int(10000/tiempo * dificultad_mult))
+                                    usuario.puntuacion = puntos
+                                    puntuacion_escapa.append((usuario.nombre_usuario, usuario.puntuacion))
+
+                                    victoria = False
+                                    mostrar_inicio = True
+                                    mostrar_ingreso = True
+                                    mostrar_podio = True
+
+                        pygame.display.update()
+
+                    if perdio:
+                        screen.fill((0,0,0))
+                        screen.blit(background_optimizado,(0,0)) #Colocar el backgound de la pantalla
+
+                        screen.blit(podio_fondo, (ANCHO / 2 - 250, ALTO / 2 - 200))
+
+                        texto_victoria = FONT_UPHEAT_BIG.render("PERDIO!", True, (255, 255, 255))
+                        screen.blit(texto_victoria, (ANCHO / 2 - 90, ALTO / 2 - 100))
+
+                        screen.blit(btn_rendirse, (ANCHO / 2 - 70, ALTO / 2 + 30))
+                        btn_rendirse_rect.left = ANCHO / 2 - 70
+                        btn_rendirse_rect.top = ALTO / 2 + 30
+
+                        for event in pygame.event.get():
+                            if event.type == pygame.QUIT:
+                                running = False
+                            if event.type == pygame.MOUSEBUTTONDOWN:
+
+                                if btn_rendirse_rect.collidepoint(event.pos):
+                                    start_time = pygame.time.get_ticks()
+
+                                    perdio = False
+                                    mostrar_inicio = True
+                                    mostrar_ingreso = True
+                                    mostrar_podio = True
+                                    
 
                         pygame.display.update()
 
