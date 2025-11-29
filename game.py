@@ -94,62 +94,6 @@ btn_rendirse_rect = btn_rendirse.get_rect()
 CAMINO, ENTRADA, SALIDA, TRAMPA, LIANA, TUNEL, MURO = 0,1,2,3,4,5,6
 
 
-'''
-def generar_mapa_aleatorio(filas=7, cols=14, p_muro=0.35, p_liana=0.08, p_tunel=0.08):
-    mapa = [[MURO for _ in range(cols)] for _ in range(filas)]
-
-    # Esquinas opuestas por pares
-    pares_opuestos = [
-        ((0, 0), (filas-1, cols-1)),          # sup-izq  <-> inf-der
-        ((0, cols-1), (filas-1, 0))           # sup-der  <-> inf-izq
-    ]
-
-    entrada, salida = random.choice(pares_opuestos)
-    er, ec = entrada
-    sr, sc = salida
-
-    mapa[er][ec] = ENTRADA
-    mapa[sr][sc] = SALIDA
-
-    # Tallar camino garantizado (random walk acercándose a salida)
-    r, c = er, ec
-    while (r, c) != (sr, sc):
-        opciones = []
-        if r > 0: opciones.append((r-1, c))
-        if r < filas-1: opciones.append((r+1, c))
-        if c > 0: opciones.append((r, c-1))
-        if c < cols-1: opciones.append((r, c+1))
-
-        def dist(pos):
-            return abs(pos[0]-sr) + abs(pos[1]-sc)
-
-        opciones.sort(key=dist)
-        if random.random() < 0.7:
-            r, c = opciones[0]
-        else:
-            r, c = random.choice(opciones)
-
-        if (r, c) != (sr, sc):
-            mapa[r][c] = CAMINO
-
-    # Rellenar resto
-    for i in range(filas):
-        for j in range(cols):
-            if mapa[i][j] in (ENTRADA, SALIDA, CAMINO):
-                continue
-            roll = random.random()
-            if roll < p_muro:
-                mapa[i][j] = MURO
-            elif roll < p_muro + p_liana:
-                mapa[i][j] = LIANA
-            elif roll < p_muro + p_liana + p_tunel:
-                mapa[i][j] = TUNEL
-            else:
-                mapa[i][j] = CAMINO
-    return mapa
-
-'''
-
 def generar_mapa_aleatorio(filas=7, cols=14):
     
     mapa = [[MURO for _ in range(cols)] for _ in range(filas)]
@@ -214,6 +158,8 @@ def generar_mapa_aleatorio(filas=7, cols=14):
             
 
     return mapa
+
+#Funcion que egenra la matriz pero con los objetos
 
 def generar_matriz_mapa(mapa):
     initial_y = 20
@@ -622,7 +568,7 @@ while running:
                     pygame.display.update()
 
                 # =====================================================
-                # MODO CAZA (placeholder tuyo)
+                # MODO CAZA 
                 # =====================================================
 
                 elif modo_caza:

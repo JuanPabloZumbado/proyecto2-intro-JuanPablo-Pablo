@@ -160,10 +160,6 @@ class EnemigoExplorador(UExplorador):
         super().__init__(x, y)
 
     def buscar_salida(self, cazador, salida_rect, obstaculos):
-        """
-        IA de Explorador con Lógica de Comportamiento Dual, manejo de Empates y Anti-Estancamiento.
-        Ahora con filtro de memoria para prevenir reversión inmediata.
-        """
         
         self.velocidad = 5
         DISTANCIA_AMENAZA = 150 
@@ -195,9 +191,6 @@ class EnemigoExplorador(UExplorador):
         best_moves = [] 
         valid_moves = [] 
         
-        # ----------------------------------------------------
-        # 2. BÚSQUEDA DE MEJOR MOVIMIENTO
-        # ----------------------------------------------------
         
         for dx, dy in opciones_movimiento.values():
             rect_previo = self.forma.move(dx, dy)
@@ -230,38 +223,27 @@ class EnemigoExplorador(UExplorador):
                 elif distancia == mejor_distancia_objetivo:
                     best_moves.append((dx, dy)) 
         
-        # ----------------------------------------------------
-        # 3. FILTRO Y EJECUCIÓN DEL MOVIMIENTO
-        # ----------------------------------------------------
         
         final_dx, final_dy = 0, 0
         
-        # 3.1 Filtro de Memoria: Prevenir Reversión Inmediata
         reverse_move = (-self.last_dx, -self.last_dy)
         
-        # Si tenemos opciones (mejores movimientos) y una de ellas es la reversión:
         if len(best_moves) > 0 and reverse_move in best_moves:
             
-            # Filtramos la reversión. Solo se elimina si hay otras opciones.
             filtered_best_moves = [move for move in best_moves if move != reverse_move]
             
             if filtered_best_moves:
                 best_moves = filtered_best_moves # Usar el camino óptimo sin reversión
         
         
-        # A) Si encontramos uno o más movimientos óptimos (después del filtro)
         if best_moves:
-            # Elegimos uno al azar de los movimientos óptimos restantes (maneja empates)
             final_dx, final_dy = random.choice(best_moves)
             self.mover_personaje(final_dx, final_dy, obstaculos)
             
-        # B) Si NO encontramos un movimiento óptimo, pero HAY caminos abiertos (CALLEJÓN SIN SALIDA)
-        # Aquí el movimiento aleatorio es necesario, y la reversión está permitida.
         elif valid_moves:
             final_dx, final_dy = random.choice(valid_moves)
             self.mover_personaje(final_dx, final_dy, obstaculos)
             
-        # 3.2 Almacenar el movimiento ejecutado para la próxima iteración
         self.last_dx = final_dx
         self.last_dy = final_dy
 
