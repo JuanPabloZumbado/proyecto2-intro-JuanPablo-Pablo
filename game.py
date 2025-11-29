@@ -93,6 +93,8 @@ btn_rendirse_rect = btn_rendirse.get_rect()
 
 CAMINO, ENTRADA, SALIDA, TRAMPA, LIANA, TUNEL, MURO = 0,1,2,3,4,5,6
 
+
+'''
 def generar_mapa_aleatorio(filas=7, cols=14, p_muro=0.35, p_liana=0.08, p_tunel=0.08):
     mapa = [[MURO for _ in range(cols)] for _ in range(filas)]
 
@@ -144,6 +146,73 @@ def generar_mapa_aleatorio(filas=7, cols=14, p_muro=0.35, p_liana=0.08, p_tunel=
                 mapa[i][j] = TUNEL
             else:
                 mapa[i][j] = CAMINO
+    return mapa
+
+'''
+
+def generar_mapa_aleatorio(filas=7, cols=14):
+    
+    mapa = [[MURO for _ in range(cols)] for _ in range(filas)]
+    
+    lista_paredes = []
+    
+    pares_opuestos = [
+        ((0, 0), (filas-1, cols-1)),          
+        ((0, cols-1), (filas-1, 0))           
+    ]
+    entrada, salida = random.choice(pares_opuestos)
+    er, ec = entrada
+    sr, sc = salida
+
+    mapa[er][ec] = CAMINO
+    
+    def anadir_paredes_vecinas(r, c):
+        # Vecinos inmediatos (direcciones cardinales)
+        for dr, dc in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+            nr, nc = r + dr, c + dc
+            if 0 <= nr < filas and 0 <= nc < cols:
+                # Solo añadimos a la lista si la celda es un MURO
+                if mapa[nr][nc] == MURO:
+                    lista_paredes.append(((nr, nc), (r, c)))
+
+    anadir_paredes_vecinas(er, ec)
+    
+    while lista_paredes:
+
+        (pr, pc), (origen_r, origen_c) = lista_paredes.pop(random.randrange(len(lista_paredes)))
+        
+        dr, dc = (pr - origen_r) + pr, (pc - origen_c) + pc
+        
+        if 0 <= dr < filas and 0 <= dc < cols and mapa[dr][dc] == MURO:
+            
+            mapa[pr][pc] = CAMINO
+            
+            mapa[dr][dc] = CAMINO
+            
+            # 3. Añadir las nuevas paredes
+            anadir_paredes_vecinas(dr, dc)
+
+
+    mapa[er][ec] = ENTRADA
+    mapa[sr][sc] = SALIDA
+
+    p_tunel = 0.14  # 14% de los muros se convierten en Túneles
+    p_liana = 0.14  # 14% de los muros se convierten en Lianas
+
+    for i in range(filas):
+        for j in range(cols):
+            
+            # SOLO modificamos las casillas que son MURO (ID 6)
+            if mapa[i][j] == MURO:
+                roll = random.random()
+                
+                if roll < p_tunel:
+                    mapa[i][j] = TUNEL
+                
+                elif roll < p_tunel + p_liana: 
+                    mapa[i][j] = LIANA
+            
+
     return mapa
 
 def generar_matriz_mapa(mapa):
@@ -302,6 +371,15 @@ def obst_cazador(mapa_obj):
                 obstaculos.append((mapa_obj[fila][col]).colision)
     return obstaculos
 
+#Funcion para devolver la colison de la salida
+
+def col_salida(mapa_obj):
+    salida = None
+    for fila in range(len(mapa_obj)):
+        for col in range(len(mapa_obj[0])):
+            if (mapa_obj[fila][col]).type_id == 2:
+                salida = (mapa_obj[fila][col]).colision
+    return salida
 # ---------------------------------------------------------
 # Helpers mínimos para detectar salida
 # ---------------------------------------------------------
@@ -340,6 +418,7 @@ mover_izquierda = False
 mover_arriba = False
 mover_abajo = False
 
+caza_termino = False
 victoria = False
 perdio = False
 inicio_juego = True 
@@ -348,6 +427,7 @@ mostrar_inicio = True
 mostrar_podio = True
 modo_escapa = False
 modo_caza = False
+hay_cazador = False
 
 running = True
 
@@ -454,7 +534,9 @@ while running:
                             mapa = generar_mapa_aleatorio()
                             mapa_obj = generar_matriz_mapa(mapa)
                             initial_x_p, initial_y_p = initial_cords(mapa_obj)
+                            initial_x_e, initial_y_e = initial_cords_enemy(mapa_obj)
                             obstaculos_escapa = obst_escapa(mapa_obj)
+                            obstaculos_cazador = obst_cazador(mapa_obj)
                             obstaculos_escapa += [
                                 pygame.Rect(35, 0, 5, ALTO),
                                 pygame.Rect(1090, 0, 5, ALTO),
@@ -462,7 +544,16 @@ while running:
                                 pygame.Rect(0, 545, ANCHO, 5),
                             ]
 
-                            personaje = personajes.UExplorador(initial_x_p, initial_y_p)
+                            obstaculos_cazador += [
+                                pygame.Rect(35, 0, 5, ALTO),
+                                pygame.Rect(1090, 0, 5, ALTO),
+                                pygame.Rect(0, 15, ANCHO, 5),
+                                pygame.Rect(0, 545, ANCHO, 5),
+                            ]
+
+                            
+                            personaje = personajes.UCazador(initial_x_e, initial_y_e)
+                            enemigo = personajes.EnemigoExplorador(initial_x_p, initial_y_p)
                             start_time = pygame.time.get_ticks()
 
             else:
@@ -533,7 +624,91 @@ while running:
                 # =====================================================
                 # MODO CAZA (placeholder tuyo)
                 # =====================================================
+
+                elif modo_caza:
+                    CLOCK.tick(FPS)
+
+                    imprimir_mapa(mapa_obj)
+
+                    delta_x = 0
+                    delta_y = 0
+
+                    if mover_derecha:
+                        delta_x = 6
+                    if mover_izquierda:
+                        delta_x = -6
+                    if mover_arriba:
+                        delta_y = -6
+                    if mover_abajo:
+                        delta_y = 6
+
+                    personaje.mover_personaje(delta_x, delta_y, obstaculos_cazador)
+                        
+                    enemigo.imprimir_personaje(screen)
+                    personaje.imprimir_personaje(screen)
+                    enemigo.buscar_salida(personaje, col_salida(mapa_obj), obstaculos_escapa)
+
+                    for event in pygame.event.get():
+                        if event.type == pygame.QUIT:
+                            running = False
+
+
+                        if event.type == pygame.KEYDOWN:
+                            if event.key == pygame.K_a:
+                                mover_izquierda = True
+                            if event.key == pygame.K_d:
+                                mover_derecha = True
+                            if event.key == pygame.K_w:
+                                mover_arriba = True
+                            if event.key == pygame.K_s:
+                                mover_abajo = True
+
+                        if event.type == pygame.KEYUP:
+                            if event.key == pygame.K_a:
+                                mover_izquierda = False
+                            if event.key == pygame.K_d:
+                                mover_derecha = False
+                            if event.key == pygame.K_w:
+                                mover_arriba = False
+                            if event.key == pygame.K_s:
+                                mover_abajo = False
+
+                    if llego_a_salida(enemigo, mapa_obj):
+                        caza_termino = True
+                        modo_caza = False
+
+                    if enemigo.tocar_personaje(personaje):
+                            enemigo.reiniciar_personaje(initial_x_p, initial_y_p)
+                            usuario.puntuacion += 200
+
                 else:
+                    if caza_termino:
+                        screen.fill((0,0,0))
+                        screen.blit(background_optimizado,(0,0)) #Colocar el backgound de la pantalla
+
+                        screen.blit(podio_fondo, (ANCHO / 2 - 250, ALTO / 2 - 200))
+
+                        texto_victoria = FONT_UPHEAT_BIG.render("GANASTE!", True, (255, 255, 255))
+                        screen.blit(texto_victoria, (ANCHO / 2 - 90, ALTO / 2 - 100))
+
+                        screen.blit(btn_victoria, (ANCHO / 2 - 70, ALTO / 2))
+                        btn_victoria_rect.left = ANCHO / 2 - 70
+                        btn_victoria_rect.top = ALTO / 2
+
+                        for event in pygame.event.get():
+                            if event.type == pygame.QUIT:
+                                running = False
+                            if event.type == pygame.MOUSEBUTTONDOWN:
+                                if btn_victoria_rect.collidepoint(event.pos):
+                                    puntuacion_caza.append((usuario.nombre_usuario, usuario.puntuacion))
+
+                                    caza_termino = False
+                                    mostrar_inicio = True
+                                    mostrar_ingreso = True
+                                    mostrar_podio = True
+                        
+                        pygame.display.update()
+
                     if victoria:
                         screen.fill((0,0,0))
                         screen.blit(background_optimizado,(0,0)) #Colocar el backgound de la pantalla
